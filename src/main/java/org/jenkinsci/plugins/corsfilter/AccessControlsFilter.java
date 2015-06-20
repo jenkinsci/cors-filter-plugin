@@ -18,7 +18,9 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.ArrayList;
 import java.util.logging.Logger;
+import org.apache.commons.lang.StringUtils;
 
 /**
  * Filter to support <a href="http://en.wikipedia.org/wiki/Cross-origin_resource_sharing">CORS</a>
@@ -35,6 +37,7 @@ public class AccessControlsFilter implements Filter, Describable<AccessControlsF
     private static final Logger LOGGER = Logger.getLogger(AccessControlsFilter.class.getCanonicalName());
     private static final String PREFLIGHT_REQUEST = "OPTIONS";
     private List<String> allowedOriginsList = null;
+    private List<String> allowedHeadersList = null;
 
     @Initializer(after = InitMilestone.JOB_LOADED)
     public static void init() throws ServletException {
@@ -88,7 +91,51 @@ public class AccessControlsFilter implements Filter, Describable<AccessControlsF
             resp.addHeader("Access-Control-Allow-Methods", getDescriptor().getAllowedMethods());
             resp.addHeader("Access-Control-Allow-Credentials", "true");
             resp.addHeader("Access-Control-Allow-Origin", origin);
+
+            /**
+             * Requested headers
+             */
+            String requestedHeaders = req.getHeader("Access-Control-Request-Headers");
+            if (requestedHeaders != null && !requestedHeaders.trim().isEmpty()) {
+                List<String> acceptedHeadersList = processRequestedHeaders(Arrays.asList(requestedHeaders.split("\\s*,\\s*")));
+                if (!acceptedHeadersList.isEmpty()) {
+                    // JAVA 8+
+                    //resp.addHeader("Access-Control-Allow-Headers", String.join(", ", acceptedHeadersList));
+                    // JAVA 7
+                    if (acceptedHeadersList.size() == 1) {
+                        resp.addHeader("Access-Control-Allow-Headers", acceptedHeadersList.get(0));
+                    } else {
+                        StringBuilder sb = new StringBuilder();
+                        sb.append(acceptedHeadersList.get(0));
+                        for (int i = 1; i < acceptedHeadersList.size(); i++) {
+                            sb.append(", ").append(acceptedHeadersList.get(i));
+                        }
+                        resp.addHeader("Access-Control-Allow-Headers", sb.toString());
+                    }
+                }
+            }
         }
+    }
+
+    private List<String> processRequestedHeaders(List<String> requestedList) {
+        List<String> acceptedList = new ArrayList<String>();
+
+        if (allowedHeadersList == null) {
+            String allowedHeaders = getDescriptor().getAllowedHeaders();
+            if (allowedHeaders != null && !allowedHeaders.trim().isEmpty()) {
+                allowedHeadersList = Arrays.asList(allowedHeaders.split("\\s*,\\s*"));
+            } else {
+                allowedHeadersList = Collections.EMPTY_LIST;
+            }
+        }
+
+        for (int i = 0; i < requestedList.size(); i++) {
+            if (allowedHeadersList.contains(requestedList.get(i))) {
+                acceptedList.add(requestedList.get(i));
+            }
+        }
+
+        return acceptedList;
     }
 
     /**
@@ -141,6 +188,7 @@ public class AccessControlsFilter implements Filter, Describable<AccessControlsF
         private boolean enabled;
         private String allowedOrigins;
         private String allowedMethods;
+        private String allowedHeaders;
 
         public DescriptorImpl() {
             load();
@@ -156,6 +204,7 @@ public class AccessControlsFilter implements Filter, Describable<AccessControlsF
             enabled = json.getBoolean("enabled");
             allowedOrigins = json.getString("allowedOrigins");
             allowedMethods = json.getString("allowedMethods");
+            allowedHeaders = json.getString("allowedHeaders");
 
             save();
             return super.configure(req, json);
@@ -183,6 +232,14 @@ public class AccessControlsFilter implements Filter, Describable<AccessControlsF
 
         public void setAllowedMethods(String allowedMethods) {
             this.allowedMethods = allowedMethods;
+        }
+
+        public String getAllowedHeaders() {
+            return allowedHeaders;
+        }
+
+        public void setAllowedHeaders(String allowedHeaders) {
+            this.allowedHeaders = allowedHeaders;
         }
     }
 }

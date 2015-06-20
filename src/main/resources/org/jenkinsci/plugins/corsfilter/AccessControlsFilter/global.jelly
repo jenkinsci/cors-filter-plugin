@@ -10,5 +10,8 @@
     <f:entry title="Access-Control-Allow-Methods" field="allowedMethods">
       <f:textbox/>
     </f:entry>
+    <f:entry title="Access-Control-Allow-Headers" field="allowedHeaders">
+      <f:textbox/>
+    </f:entry>
   </f:section>
 </j:jelly>

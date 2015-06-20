@@ -62,4 +62,19 @@ public class AccessControlsFilterTest extends JenkinsRule {
         assertEquals(htmlPage.getWebResponse().getResponseHeaderValue("Access-Control-Allow-Origin"), "http://localhost:9000");
     }
 
+    @Test
+    public void testAllowHeaders() throws Exception {
+        descriptor.setAllowedMethods("GET, OPTIONS");
+        descriptor.setAllowedOrigins("http://localhost:9000, http://localhost:8080");
+        descriptor.setAllowedHeaders("Origin, Content-Type, X-Foo");
+        descriptor.setEnabled(true);
+
+        client.addRequestHeader("Origin", "http://localhost:9000");
+        client.addRequestHeader("Access-Control-Request-Headers", "Content-Type");
+        HtmlPage htmlPage = client.goTo("");
+
+        assertTrue(Boolean.valueOf(htmlPage.getWebResponse().getResponseHeaderValue("Access-Control-Allow-Credentials")));
+        assertEquals(htmlPage.getWebResponse().getResponseHeaderValue("Access-Control-Allow-Headers"), "Content-Type");
+    }
+
 }
