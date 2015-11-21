@@ -7,8 +7,8 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
 
-import static org.hamcrest.Matchers.contains;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Test CORS Filter
@@ -35,12 +35,18 @@ public class AccessControlsFilterTest extends JenkinsRule {
         descriptor.setAllowedOrigins(null);
         descriptor.setEnabled(false);
         descriptor.setAllowedMethods(null);
+        descriptor.setAllowedHeaders(null);
+        descriptor.setExposedHeaders(null);
+        descriptor.setMaxAge(null);
     }
 
     @Test
     public void testAllowCredentials() throws Exception {
         descriptor.setAllowedMethods("GET, OPTIONS");
         descriptor.setAllowedOrigins("*");
+        descriptor.setAllowedHeaders("X-Requested-With");
+        descriptor.setExposedHeaders("X-Requested-With");
+        descriptor.setMaxAge("999");
         descriptor.setEnabled(true);
 
         client.addRequestHeader("Origin", "*");
@@ -51,8 +57,11 @@ public class AccessControlsFilterTest extends JenkinsRule {
 
     @Test
     public void testAllowOrigins() throws Exception {
-        descriptor.setAllowedMethods("GET, OPTIONS");
         descriptor.setAllowedOrigins("http://localhost:9000, http://localhost:8080");
+        descriptor.setAllowedMethods("GET, OPTIONS");
+        descriptor.setAllowedHeaders("X-Requested-With");
+        descriptor.setExposedHeaders("X-Requested-With");
+        descriptor.setMaxAge("999");
         descriptor.setEnabled(true);
 
         client.addRequestHeader("Origin", "http://localhost:9000");
@@ -60,6 +69,9 @@ public class AccessControlsFilterTest extends JenkinsRule {
 
         assertTrue(Boolean.valueOf(htmlPage.getWebResponse().getResponseHeaderValue("Access-Control-Allow-Credentials")));
         assertEquals(htmlPage.getWebResponse().getResponseHeaderValue("Access-Control-Allow-Origin"), "http://localhost:9000");
+        assertEquals(htmlPage.getWebResponse().getResponseHeaderValue("Access-Control-Allow-Headers"), "X-Requested-With");
+        assertEquals(htmlPage.getWebResponse().getResponseHeaderValue("Access-Control-Expose-Headers"), "X-Requested-With");
+        assertEquals(htmlPage.getWebResponse().getResponseHeaderValue("Access-Control-Max-Age"), "999");
     }
 
 }

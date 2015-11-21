@@ -85,9 +85,12 @@ public class AccessControlsFilter implements Filter, Describable<AccessControlsF
     private void processAccessControls(HttpServletRequest req, HttpServletResponse resp) {
         String origin = req.getHeader("Origin");
         if (origin != null && isAllowed(origin.trim())) {
-            resp.addHeader("Access-Control-Allow-Methods", getDescriptor().getAllowedMethods());
             resp.addHeader("Access-Control-Allow-Credentials", "true");
             resp.addHeader("Access-Control-Allow-Origin", origin);
+            resp.addHeader("Access-Control-Allow-Methods", getDescriptor().getAllowedMethods());
+            resp.addHeader("Access-Control-Allow-Headers", getDescriptor().getAllowedHeaders());
+            resp.addHeader("Access-Control-Expose-Headers", getDescriptor().getExposedHeaders());
+            resp.addHeader("Access-Control-Max-Age", getDescriptor().getMaxAge());
         }
     }
 
@@ -141,6 +144,9 @@ public class AccessControlsFilter implements Filter, Describable<AccessControlsF
         private boolean enabled;
         private String allowedOrigins;
         private String allowedMethods;
+        private String allowedHeaders;
+        private String exposedHeaders;
+        private String maxAge;
 
         public DescriptorImpl() {
             load();
@@ -156,6 +162,9 @@ public class AccessControlsFilter implements Filter, Describable<AccessControlsF
             enabled = json.getBoolean("enabled");
             allowedOrigins = json.getString("allowedOrigins");
             allowedMethods = json.getString("allowedMethods");
+            allowedHeaders = json.getString("allowedHeaders");
+            exposedHeaders = json.getString("exposedHeaders");
+            maxAge = json.getString("maxAge");
 
             save();
             return super.configure(req, json);
@@ -183,6 +192,30 @@ public class AccessControlsFilter implements Filter, Describable<AccessControlsF
 
         public void setAllowedMethods(String allowedMethods) {
             this.allowedMethods = allowedMethods;
+        }
+
+        public String getAllowedHeaders() {
+            return allowedHeaders;
+        }
+
+        public void setAllowedHeaders(String allowedHeaders) {
+            this.allowedHeaders = allowedHeaders;
+        }
+
+        public String getExposedHeaders() {
+            return exposedHeaders;
+        }
+
+        public void setExposedHeaders(String exposedHeaders) {
+            this.exposedHeaders = exposedHeaders;
+        }
+
+        public String getMaxAge() {
+            return maxAge;
+        }
+
+        public void setMaxAge(String maxAge) {
+            this.maxAge = maxAge;
         }
     }
 }
