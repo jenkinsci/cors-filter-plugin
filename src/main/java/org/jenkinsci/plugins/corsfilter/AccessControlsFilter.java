@@ -7,6 +7,7 @@ import hudson.init.Initializer;
 import hudson.model.Describable;
 import hudson.model.Descriptor;
 import hudson.util.PluginServletFilter;
+import java.util.Arrays;
 import jenkins.model.Jenkins;
 import net.sf.json.JSONObject;
 import org.kohsuke.stapler.StaplerRequest;
@@ -15,8 +16,6 @@ import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -33,8 +32,6 @@ public class AccessControlsFilter implements Filter, Describable<AccessControlsF
     @Extension
     public static final DescriptorImpl DESCRIPTOR = new DescriptorImpl();
     private static final Logger LOGGER = Logger.getLogger(AccessControlsFilter.class.getCanonicalName());
-    private static final String PREFLIGHT_REQUEST = "OPTIONS";
-    private List<String> allowedOriginsList = null;
 
     @Initializer(after = InitMilestone.JOB_LOADED)
     public static void init() throws ServletException {
@@ -60,19 +57,9 @@ public class AccessControlsFilter implements Filter, Describable<AccessControlsF
             final HttpServletResponse resp = (HttpServletResponse) response;
             if (request instanceof HttpServletRequest && getDescriptor().isEnabled()) {
                 HttpServletRequest req = (HttpServletRequest) request;
-
-                /**
-                 * If the request is GET, set allow origin
-                 * If its pre-flight request, set allow methods
-                 */
-                processAccessControls(req, resp);
-
-                /**
-                 * If this is a preflight request, set the response to 200 OK.
-                 */
-                if (req.getMethod().equals(PREFLIGHT_REQUEST)) {
-                    resp.setStatus(200);
-                    return;
+                if (!isAllowed(req.getPathInfo())){
+                  resp.sendError(HttpServletResponse.SC_NOT_FOUND);
+                  return;
                 }
             }
         }
@@ -80,53 +67,22 @@ public class AccessControlsFilter implements Filter, Describable<AccessControlsF
     }
 
     /**
-     * Apply access controls
-     */
-    private void processAccessControls(HttpServletRequest req, HttpServletResponse resp) {
-        String origin = req.getHeader("Origin");
-        if (origin != null && isAllowed(origin.trim())) {
-            resp.addHeader("Access-Control-Allow-Credentials", "true");
-            resp.addHeader("Access-Control-Allow-Origin", origin);
-            resp.addHeader("Access-Control-Allow-Methods", getDescriptor().getAllowedMethods());
-            resp.addHeader("Access-Control-Allow-Headers", getDescriptor().getAllowedHeaders());
-            resp.addHeader("Access-Control-Expose-Headers", getDescriptor().getExposedHeaders());
-            resp.addHeader("Access-Control-Max-Age", getDescriptor().getMaxAge());
-        }
-    }
-
-    /**
-     * Check if the origin is allowed
+     * Check if path is allowed
      *
-     * @param origin
+     * @param pathInfo
      * @return
      */
-    private boolean isAllowed(String origin) {
-
-        if (allowedOriginsList == null) {
-            String allowedOrigins = getDescriptor().getAllowedOrigins();
-
-            if (allowedOrigins != null && !allowedOrigins.trim().isEmpty()) {
-                allowedOriginsList = Arrays.asList(allowedOrigins.split(","));
-            } else {
-                allowedOriginsList = Collections.EMPTY_LIST;
-            }
+    public boolean isAllowed(String pathInfo) {
+      if (pathInfo == null) {
+        return true;
+      }
+      String[] prefixBlackList = getDescriptor().getPrefixBlacklist();
+      for (int i=0; i<prefixBlackList.length; i++) {
+        if (pathInfo.startsWith(prefixBlackList[i])) {
+          return false;
         }
-
-        /**
-         * Asterix (*) means that the resource can be accessed by any domain in a cross-site manner.
-         * Should be used with caution.
-         */
-        if (allowedOriginsList.contains("*")) {
-            return true;
-        }
-
-        for (int i = 0; i < allowedOriginsList.size(); i++) {
-            if (allowedOriginsList.get(i).equals(origin)) {
-                return true;
-            }
-        }
-
-        return false;
+      }
+      return true;
     }
 
     @Override
@@ -140,13 +96,27 @@ public class AccessControlsFilter implements Filter, Describable<AccessControlsF
     }
 
     public static final class DescriptorImpl extends Descriptor<AccessControlsFilter> {
-
+        private final String[] defaultBlackListPrefix = new String[] {
+            "/restart",
+            "/safeRestart",
+            // Disable https://wiki.jenkins-ci.org/display/JENKINS/Jenkins+Script+Console
+            "/script",
+            "/scriptText",
+            "/credential-store",
+            "/asynchPeople",
+            "/people",
+            "/whoAmI",
+            "/updateCenter",
+            "/pluginManager",
+            "/scriptApproval",
+            "/log",
+            "/credentials",
+            "/cli",
+            "/about",
+            "/user",
+        };
+        private String[] prefixBlacklist;
         private boolean enabled;
-        private String allowedOrigins;
-        private String allowedMethods;
-        private String allowedHeaders;
-        private String exposedHeaders;
-        private String maxAge;
 
         public DescriptorImpl() {
             load();
@@ -154,18 +124,13 @@ public class AccessControlsFilter implements Filter, Describable<AccessControlsF
 
         @Override
         public String getDisplayName() {
-            return "CORS Filter";
+            return "URL Filter";
         }
 
         public boolean configure(StaplerRequest req, JSONObject json) throws FormException {
-
             enabled = json.getBoolean("enabled");
-            allowedOrigins = json.getString("allowedOrigins");
-            allowedMethods = json.getString("allowedMethods");
-            allowedHeaders = json.getString("allowedHeaders");
-            exposedHeaders = json.getString("exposedHeaders");
-            maxAge = json.getString("maxAge");
-
+            String blackList = json.getString("blackList");
+            prefixBlacklist = blackList.split("\n");
             save();
             return super.configure(req, json);
         }
@@ -178,44 +143,22 @@ public class AccessControlsFilter implements Filter, Describable<AccessControlsF
             this.enabled = enabled;
         }
 
-        public String getAllowedOrigins() {
-            return allowedOrigins;
+        public String[] getPrefixBlacklist() {
+          if (prefixBlacklist == null) {
+            prefixBlacklist = Arrays.copyOf(defaultBlackListPrefix, defaultBlackListPrefix.length);
+          }
+          return prefixBlacklist;
         }
 
-        public void setAllowedOrigins(String allowedOrigins) {
-            this.allowedOrigins = allowedOrigins;
+        public String getBlackList() {
+          return String.join("\n", getPrefixBlacklist());
         }
 
-        public String getAllowedMethods() {
-            return allowedMethods;
+        public void setBlackList(String blackList) {
+          prefixBlacklist = blackList.split("\n");
         }
 
-        public void setAllowedMethods(String allowedMethods) {
-            this.allowedMethods = allowedMethods;
-        }
+        public void setPrefixBlacklist(String[] prefixBlacklist) { this.prefixBlacklist = prefixBlacklist; }
 
-        public String getAllowedHeaders() {
-            return allowedHeaders;
-        }
-
-        public void setAllowedHeaders(String allowedHeaders) {
-            this.allowedHeaders = allowedHeaders;
-        }
-
-        public String getExposedHeaders() {
-            return exposedHeaders;
-        }
-
-        public void setExposedHeaders(String exposedHeaders) {
-            this.exposedHeaders = exposedHeaders;
-        }
-
-        public String getMaxAge() {
-            return maxAge;
-        }
-
-        public void setMaxAge(String maxAge) {
-            this.maxAge = maxAge;
-        }
     }
 }

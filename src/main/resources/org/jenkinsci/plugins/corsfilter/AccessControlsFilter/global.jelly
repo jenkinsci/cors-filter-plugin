@@ -4,20 +4,8 @@
     <f:entry title="Is Enabled" field="enabled">
       <f:checkbox/>
     </f:entry>
-    <f:entry title="Access-Control-Allow-Origins" field="allowedOrigins">
-      <f:textbox/>
-    </f:entry>
-    <f:entry title="Access-Control-Allow-Methods" field="allowedMethods">
-      <f:textbox/>
-    </f:entry>
-    <f:entry title="Access-Control-Allow-Headers" field="allowedHeaders">
-      <f:textbox/>
-    </f:entry>
-    <f:entry title="Access-Control-Expose-Headers" field="exposedHeaders">
-      <f:textbox/>
-    </f:entry>
-    <f:entry title="Access-Control-Max-Age" field="maxAge">
-      <f:number/>
+    <f:entry title="Blocked URL List" field="blackList">
+      <f:textarea/>
     </f:entry>
   </f:section>
 </j:jelly>
