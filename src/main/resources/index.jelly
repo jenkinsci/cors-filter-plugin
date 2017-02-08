@@ -1,4 +1,4 @@
 <?jelly escape-by-default='true'?>
 <div>
-  This plugin allows Jenkins to serve Cross-site HTTP requests
+  This plugin allows Jenkins to filter some specific url
 </div>
