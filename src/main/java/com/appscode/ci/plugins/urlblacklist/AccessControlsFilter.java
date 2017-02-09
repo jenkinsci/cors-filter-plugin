@@ -1,4 +1,4 @@
-package org.jenkinsci.plugins.corsfilter;
+package com.appscode.ci.plugins.urlblacklist;
 
 import com.google.inject.Injector;
 import hudson.Extension;
@@ -10,7 +10,6 @@ import hudson.util.FormValidation;
 import hudson.util.PluginServletFilter;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.servlet.Filter;
@@ -39,6 +38,7 @@ public class AccessControlsFilter implements Filter, Describable<AccessControlsF
   public static final DescriptorImpl DESCRIPTOR = new DescriptorImpl();
   private static final Logger LOGGER = Logger
       .getLogger(AccessControlsFilter.class.getCanonicalName());
+
   @Initializer(after = InitMilestone.JOB_LOADED)
   public static void init() throws ServletException {
     Injector inj = Jenkins.getInstance().getInjector();
@@ -118,8 +118,8 @@ public class AccessControlsFilter implements Filter, Describable<AccessControlsF
 
     public boolean configure(StaplerRequest req, JSONObject json) throws FormException {
       String blackList[] = tokenizeBlackList(json.getString("blackListPrefix"));
-      if(!isValidBlackList(blackList)){
-        throw new FormException("Malformed URL list in URL filter", "blackListPrefix");
+      if (!isValidBlackList(blackList)) {
+        throw new FormException("Malformed URL list", "blackListPrefix");
       }
       setBlackListPrefix(blackList);
       setEnabled(json.getBoolean("enabled"));
@@ -131,13 +131,13 @@ public class AccessControlsFilter implements Filter, Describable<AccessControlsF
       if (pathInfo == null) {
         return false;
       }
-      if(pathInfo.startsWith("/")){
+      if (pathInfo.startsWith("/")) {
         pathInfo = pathInfo.substring(1);
       }
       String urlSegment[] = pathInfo.split("/");
-      for (String blackListedToken: blackListPrefix) {
-        if(blackListedToken.equals("/"+urlSegment[0])){
-          return  true;
+      for (String blackListedToken : blackListPrefix) {
+        if (blackListedToken.equals("/" + urlSegment[0])) {
+          return true;
         }
       }
       return false;
@@ -166,7 +166,7 @@ public class AccessControlsFilter implements Filter, Describable<AccessControlsF
 
     public boolean isValidBlackList(String[] blackList) {
       for (String path : blackList) {
-        if (!path.startsWith("/")){
+        if (!path.startsWith("/")) {
           return false;
         }
       }
@@ -175,10 +175,10 @@ public class AccessControlsFilter implements Filter, Describable<AccessControlsF
 
     public String[] tokenizeBlackList(String blackList) {
       String tokens[] = blackList.split("\n");
-      ArrayList<String>list = new ArrayList<String>();
-      for (String token: tokens) {
+      ArrayList<String> list = new ArrayList<String>();
+      for (String token : tokens) {
         String trimedToken = token.trim();
-        if (!trimedToken.equals("")){
+        if (!trimedToken.equals("")) {
           list.add(trimedToken);
         }
       }

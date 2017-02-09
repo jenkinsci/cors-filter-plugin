@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns="http://maven.apache.org/POM/4.0.0"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
@@ -7,37 +9,29 @@
     <artifactId>plugin</artifactId>
     <!-- Baseline Jenkins version you use to build and test the plugin. Users must have this version or newer to run. -->
     <version>1.580.1</version>
-    <relativePath />
+    <relativePath/>
   </parent>
-  <groupId>org.jenkins-ci.plugins</groupId>
-  <artifactId>cors-filter</artifactId>
-  <version>1.2-SNAPSHOT</version>
+
+  <groupId>com.appscode.ci</groupId>
+  <artifactId>url-blacklist-plugin</artifactId>
+  <version>1.0-SNAPSHOT</version>
   <packaging>hpi</packaging>
 
-  <name>CORS support for Jenkins</name>
-  <description>Support Cross Site Posts to access Jenkins resources</description>
-  <url>https://wiki.jenkins-ci.org/display/JENKINS/Cors+Filter+Plugin</url>
+  <properties>
+    <jenkins.version>2.32.1-ac</jenkins.version>
+    <datanucleus.version>5.0.0-release</datanucleus.version>
+    <java.level>8</java.level>
+  </properties>
+
+  <name>URL Blacklist Plugin</name>
+  <description>This plugin allows team to restrict some Jenkins URL</description>
+  <url>https://appscode.com/docs/ci</url>
   <licenses>
     <license>
-      <name>MIT License</name>
-      <url>http://opensource.org/licenses/MIT</url>
+      <name>Apache-2.0 License</name>
+      <url>https://opensource.org/licenses/Apache-2.0</url>
     </license>
   </licenses>
-
-  <developers>
-    <developer>
-      <id>uday</id>
-      <name>Udaypal Aarkoti</name>
-      <email>uaarkoti@gmail.com</email>
-    </developer>
-  </developers>
-
-  <scm>
-    <connection>scm:git:git://github.com/jenkinsci/${project.artifactId}-plugin.git</connection>
-    <developerConnection>scm:git:git@github.com:jenkinsci/${project.artifactId}-plugin.git</developerConnection>
-    <url>http://github.com/jenkinsci/${project.artifactId}-plugin</url>
-    <tag>HEAD</tag>
-  </scm>  
 
   <repositories>
     <repository>
@@ -52,4 +46,21 @@
     </pluginRepository>
   </pluginRepositories>
 
+  <build>
+    <plugins>
+      <plugin>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <configuration>
+          <source>1.7</source>
+          <target>1.7</target>
+          <!-- <source>1.${java.level}</source>
+          <target>1.${java.level}</target> -->
+          <!-- default reuseCreated is more performant
+          feel free to uncomment if you have any issues on your platform
+          <compilerReuseStrategy>alwaysNew</compilerReuseStrategy>
+          -->
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
 </project>
