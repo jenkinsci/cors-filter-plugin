@@ -1,14 +1,17 @@
 package org.jenkinsci.plugins.corsfilter;
 
-import com.gargoylesoftware.htmlunit.html.HtmlPage;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertTrue;
+
+import javax.servlet.http.HttpServletResponse;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 /**
  * Test CORS Filter
@@ -32,46 +35,56 @@ public class AccessControlsFilterTest extends JenkinsRule {
 
     @After
     public void tearDown() throws Exception {
-        descriptor.setAllowedOrigins(null);
         descriptor.setEnabled(false);
-        descriptor.setAllowedMethods(null);
-        descriptor.setAllowedHeaders(null);
-        descriptor.setExposedHeaders(null);
-        descriptor.setMaxAge(null);
     }
 
     @Test
-    public void testAllowCredentials() throws Exception {
-        descriptor.setAllowedMethods("GET, OPTIONS");
-        descriptor.setAllowedOrigins("*");
-        descriptor.setAllowedHeaders("X-Requested-With");
-        descriptor.setExposedHeaders("X-Requested-With");
-        descriptor.setMaxAge("999");
-        descriptor.setEnabled(true);
+    public void isValidBlackList() {
+        String []blackList = new String[]{"/user", "/restart"};
+        assertTrue(descriptor.isValidBlackList(blackList));
 
-        client.addRequestHeader("Origin", "*");
-        HtmlPage htmlPage = client.goTo("");
-
-        assertTrue(Boolean.valueOf(htmlPage.getWebResponse().getResponseHeaderValue("Access-Control-Allow-Credentials")));
+        blackList = new String[]{"user"};
+        assertFalse(descriptor.isValidBlackList(blackList));
     }
 
     @Test
-    public void testAllowOrigins() throws Exception {
-        descriptor.setAllowedOrigins("http://localhost:9000, http://localhost:8080");
-        descriptor.setAllowedMethods("GET, OPTIONS");
-        descriptor.setAllowedHeaders("X-Requested-With");
-        descriptor.setExposedHeaders("X-Requested-With");
-        descriptor.setMaxAge("999");
-        descriptor.setEnabled(true);
-
-        client.addRequestHeader("Origin", "http://localhost:9000");
-        HtmlPage htmlPage = client.goTo("");
-
-        assertTrue(Boolean.valueOf(htmlPage.getWebResponse().getResponseHeaderValue("Access-Control-Allow-Credentials")));
-        assertEquals(htmlPage.getWebResponse().getResponseHeaderValue("Access-Control-Allow-Origin"), "http://localhost:9000");
-        assertEquals(htmlPage.getWebResponse().getResponseHeaderValue("Access-Control-Allow-Headers"), "X-Requested-With");
-        assertEquals(htmlPage.getWebResponse().getResponseHeaderValue("Access-Control-Expose-Headers"), "X-Requested-With");
-        assertEquals(htmlPage.getWebResponse().getResponseHeaderValue("Access-Control-Max-Age"), "999");
+    public void tokenizeBlackList() {
+        String blackList = "/user\n     /restart\n\n\n/hello";
+        String expectd[]= new String[]{"/user", "/restart", "/hello"};
+        descriptor.tokenizeBlackList(blackList);
+        assertArrayEquals(expectd, descriptor.tokenizeBlackList(blackList));
     }
 
+    @Test
+    public void isBlocked(){
+      String blackList[] = new String[]{"/user", "/script"};
+      descriptor.setBlackListPrefix(blackList);
+      assertTrue(descriptor.isBlocked("/user"));
+      assertTrue(descriptor.isBlocked("/user/hell/world"));
+      assertTrue(descriptor.isBlocked("/script"));
+      assertFalse(descriptor.isBlocked("/scripts/img/url"));
+    }
+
+    @Test
+    public void testFilter() throws Exception{
+      String blackList[]= new String[]{"/userContent", "/restart", "/hello"};
+      descriptor.setBlackListPrefix(blackList);
+      descriptor.setEnabled(true);
+
+      client.setThrowExceptionOnFailingStatusCode(false);
+      assertEquals(HttpServletResponse.SC_FORBIDDEN, client.goTo("userContent").getWebResponse().getStatusCode());
+      assertEquals(HttpServletResponse.SC_OK, client.goTo("script").getWebResponse().getStatusCode());
+      assertEquals(HttpServletResponse.SC_OK, client.goTo("configure").getWebResponse().getStatusCode());
+
+      descriptor.doResetDefault();
+      //All default restricted link should be forbidden
+      for (String link: descriptor.tokenizeBlackList(descriptor.getBlackListPrefix())) {
+        assertEquals(HttpServletResponse.SC_FORBIDDEN, client.goTo(link.substring(1)).getWebResponse().getStatusCode());
+      }
+      //Non restricted should allowed
+      assertEquals(HttpServletResponse.SC_OK, client.goTo("configure").getWebResponse().getStatusCode());
+      descriptor.setEnabled(false);
+      //Now restricted link should also allowed
+      assertEquals(HttpServletResponse.SC_OK, client.goTo("userContent").getWebResponse().getStatusCode());
+    }
 }
