@@ -18,7 +18,6 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.logging.Logger;
 
 /**
  * Filter to support <a href="http://en.wikipedia.org/wiki/Cross-origin_resource_sharing">CORS</a>
@@ -32,9 +31,7 @@ public class AccessControlsFilter implements Filter, Describable<AccessControlsF
 
     @Extension
     public static final DescriptorImpl DESCRIPTOR = new DescriptorImpl();
-    private static final Logger LOGGER = Logger.getLogger(AccessControlsFilter.class.getCanonicalName());
     private static final String PREFLIGHT_REQUEST = "OPTIONS";
-    private List<String> allowedOriginsList = null;
 
     @Initializer(after = InitMilestone.JOB_LOADED)
     public static void init() throws ServletException {
@@ -102,14 +99,13 @@ public class AccessControlsFilter implements Filter, Describable<AccessControlsF
      */
     private boolean isAllowed(String origin) {
 
-        if (allowedOriginsList == null) {
-            String allowedOrigins = getDescriptor().getAllowedOrigins();
+        String allowedOrigins = getDescriptor().getAllowedOrigins();
+        List<String> allowedOriginsList;
 
-            if (allowedOrigins != null && !allowedOrigins.trim().isEmpty()) {
-                allowedOriginsList = Arrays.asList(allowedOrigins.split(","));
-            } else {
-                allowedOriginsList = Collections.EMPTY_LIST;
-            }
+        if (allowedOrigins != null && !allowedOrigins.trim().isEmpty()) {
+            allowedOriginsList = Arrays.asList(allowedOrigins.split(","));
+        } else {
+            allowedOriginsList = Collections.EMPTY_LIST;
         }
 
         /**
