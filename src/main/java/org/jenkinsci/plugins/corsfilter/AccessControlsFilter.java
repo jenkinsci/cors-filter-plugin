@@ -34,7 +34,6 @@ public class AccessControlsFilter implements Filter, Describable<AccessControlsF
     public static final DescriptorImpl DESCRIPTOR = new DescriptorImpl();
     private static final Logger LOGGER = Logger.getLogger(AccessControlsFilter.class.getCanonicalName());
     private static final String PREFLIGHT_REQUEST = "OPTIONS";
-    private List<String> allowedOriginsList = null;
 
     @Initializer(after = InitMilestone.JOB_LOADED)
     public static void init() throws ServletException {
@@ -101,16 +100,7 @@ public class AccessControlsFilter implements Filter, Describable<AccessControlsF
      * @return
      */
     private boolean isAllowed(String origin) {
-
-        if (allowedOriginsList == null) {
-            String allowedOrigins = getDescriptor().getAllowedOrigins();
-
-            if (allowedOrigins != null && !allowedOrigins.trim().isEmpty()) {
-                allowedOriginsList = Arrays.asList(allowedOrigins.split(","));
-            } else {
-                allowedOriginsList = Collections.EMPTY_LIST;
-            }
-        }
+        final List<String> allowedOriginsList = getDescriptor().getAllowedOriginsList();
 
         /**
          * Asterix (*) means that the resource can be accessed by any domain in a cross-site manner.
@@ -147,9 +137,11 @@ public class AccessControlsFilter implements Filter, Describable<AccessControlsF
         private String allowedHeaders;
         private String exposedHeaders;
         private String maxAge;
+        private transient List<String> allowedOriginsList;
 
         public DescriptorImpl() {
             load();
+            allowedOriginsList = createAllowedOriginsList(allowedOrigins);
         }
 
         @Override
@@ -166,8 +158,28 @@ public class AccessControlsFilter implements Filter, Describable<AccessControlsF
             exposedHeaders = json.getString("exposedHeaders");
             maxAge = json.getString("maxAge");
 
+            allowedOriginsList = createAllowedOriginsList(allowedOrigins);
+
             save();
             return super.configure(req, json);
+        }
+
+        private List<String> createAllowedOriginsList(String allowedOrigins) {
+            final List<String> allowedOriginsList;
+            if (allowedOrigins != null && !allowedOrigins.trim().isEmpty()) {
+                allowedOriginsList = Arrays.asList(allowedOrigins.split(","));
+            } else {
+                allowedOriginsList = Collections.EMPTY_LIST;
+            }
+            return allowedOriginsList;
+        }
+
+        void reloadAllowedOriginsList() {
+            allowedOriginsList = createAllowedOriginsList(allowedOrigins);
+        }
+
+        public List<String> getAllowedOriginsList() {
+            return allowedOriginsList;
         }
 
         public boolean isEnabled() {
