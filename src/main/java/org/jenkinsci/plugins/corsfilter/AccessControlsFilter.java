@@ -15,6 +15,7 @@ import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.io.ObjectStreamException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -180,6 +181,13 @@ public class AccessControlsFilter implements Filter, Describable<AccessControlsF
 
         public List<String> getAllowedOriginsList() {
             return allowedOriginsList;
+        }
+
+        public Object readResolve() throws ObjectStreamException {
+            if (allowedOriginsList == null) {
+                createAllowedOriginsList(allowedOrigins);
+            }
+            return this;
         }
 
         public boolean isEnabled() {
