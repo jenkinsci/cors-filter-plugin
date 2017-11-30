@@ -184,9 +184,7 @@ public class AccessControlsFilter implements Filter, Describable<AccessControlsF
         }
 
         public Object readResolve() throws ObjectStreamException {
-            if (allowedOriginsList == null) {
-                createAllowedOriginsList(allowedOrigins);
-            }
+            createAllowedOriginsList(allowedOrigins);
             return this;
         }
 
