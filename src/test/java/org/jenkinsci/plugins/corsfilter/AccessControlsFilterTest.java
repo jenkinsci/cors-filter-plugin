@@ -48,6 +48,7 @@ public class AccessControlsFilterTest extends JenkinsRule {
         descriptor.setExposedHeaders("X-Requested-With");
         descriptor.setMaxAge("999");
         descriptor.setEnabled(true);
+        descriptor.reloadAllowedOriginsList();
 
         client.addRequestHeader("Origin", "*");
         HtmlPage htmlPage = client.goTo("");
@@ -63,6 +64,7 @@ public class AccessControlsFilterTest extends JenkinsRule {
         descriptor.setExposedHeaders("X-Requested-With");
         descriptor.setMaxAge("999");
         descriptor.setEnabled(true);
+        descriptor.reloadAllowedOriginsList();
 
         client.addRequestHeader("Origin", "http://localhost:9000");
         HtmlPage htmlPage = client.goTo("");
