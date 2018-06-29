@@ -1,5 +1,6 @@
 package org.jenkinsci.plugins.corsfilter;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Injector;
 import hudson.Extension;
 import hudson.init.InitMilestone;
@@ -165,10 +166,12 @@ public class AccessControlsFilter implements Filter, Describable<AccessControlsF
             return super.configure(req, json);
         }
 
-        private List<String> createAllowedOriginsList(String allowedOrigins) {
+        @VisibleForTesting
+        static List<String> createAllowedOriginsList(String allowedOrigins) {
             final List<String> allowedOriginsList;
             if (allowedOrigins != null && !allowedOrigins.trim().isEmpty()) {
-                allowedOriginsList = Arrays.asList(allowedOrigins.split(","));
+                // Split list on commas and remove whitespace
+                allowedOriginsList = Arrays.asList(allowedOrigins.split("\\s*,\\s*"));
             } else {
                 allowedOriginsList = Collections.EMPTY_LIST;
             }
