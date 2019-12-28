@@ -11,7 +11,14 @@ import jenkins.model.Jenkins;
 import net.sf.json.JSONObject;
 import org.kohsuke.stapler.StaplerRequest;
 
-import javax.servlet.*;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
+import javax.servlet.Filter;
+import javax.servlet.FilterChain;
+import javax.servlet.FilterConfig;
+import javax.servlet.ServletException;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -22,8 +29,10 @@ import java.util.List;
 import java.util.logging.Logger;
 
 /**
- * Filter to support <a href="http://en.wikipedia.org/wiki/Cross-origin_resource_sharing">CORS</a>
- * to access Jenkins API's from a dynamic web application using frameworks like AngularJS
+ * Filter to support
+ * <a href="http://en.wikipedia.org/wiki/Cross-origin_resource_sharing">CORS</a>
+ * to access Jenkins API's from a dynamic web application using frameworks like
+ * AngularJS
  *
  * @author Udaypal Aarkoti
  * @author Steven Christou
@@ -62,8 +71,8 @@ public class AccessControlsFilter implements Filter, Describable<AccessControlsF
                 HttpServletRequest req = (HttpServletRequest) request;
 
                 /**
-                 * If the request is GET, set allow origin
-                 * If its pre-flight request, set allow methods
+                 * If the request is GET, set allow origin If its pre-flight request, set allow
+                 * methods
                  */
                 processAccessControls(req, resp);
 
@@ -82,6 +91,7 @@ public class AccessControlsFilter implements Filter, Describable<AccessControlsF
     /**
      * Apply access controls
      */
+    @SuppressFBWarnings(value = "HRS_REQUEST_PARAMETER_TO_HTTP_HEADER", justification = "isAllowed() guarantees this origin is ok")
     private void processAccessControls(HttpServletRequest req, HttpServletResponse resp) {
         String origin = req.getHeader("Origin");
         if (origin != null && isAllowed(origin.trim())) {
@@ -111,8 +121,8 @@ public class AccessControlsFilter implements Filter, Describable<AccessControlsF
             return true;
         }
 
-        for (int i = 0; i < allowedOriginsList.size(); i++) {
-            if (allowedOriginsList.get(i).equals(origin)) {
+        for (String allowedOrigin : allowedOriginsList) {
+            if (allowedOrigin.equals(origin)) {
                 return true;
             }
         }
@@ -170,7 +180,7 @@ public class AccessControlsFilter implements Filter, Describable<AccessControlsF
             if (allowedOrigins != null && !allowedOrigins.trim().isEmpty()) {
                 allowedOriginsList = Arrays.asList(allowedOrigins.split(","));
             } else {
-                allowedOriginsList = Collections.EMPTY_LIST;
+                allowedOriginsList = Collections.emptyList();
             }
             return allowedOriginsList;
         }
@@ -184,7 +194,7 @@ public class AccessControlsFilter implements Filter, Describable<AccessControlsF
         }
 
         public Object readResolve() throws ObjectStreamException {
-            createAllowedOriginsList(allowedOrigins);
+            allowedOriginsList = createAllowedOriginsList(allowedOrigins);
             return this;
         }
 

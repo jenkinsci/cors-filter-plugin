@@ -6,6 +6,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
+import org.jvnet.hudson.test.JenkinsRule.WebClient;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -16,7 +17,7 @@ import static org.junit.Assert.assertTrue;
  * @author Udaypal Aarkoti
  * @author Steven Christou
  */
-public class AccessControlsFilterTest extends JenkinsRule {
+public class AccessControlsFilterTest {
 
     @Rule public JenkinsRule r = new JenkinsRule();
 
