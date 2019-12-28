@@ -23,9 +23,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.ObjectStreamException;
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -93,12 +90,9 @@ public class AccessControlsFilter implements Filter, Describable<AccessControlsF
 
     /**
      * Apply access controls
-     * 
-     * @throws UnsupportedEncodingException
      */
     @SuppressFBWarnings(value = "HRS_REQUEST_PARAMETER_TO_HTTP_HEADER", justification = "isAllowed() guarantees this origin is ok")
-    private void processAccessControls(HttpServletRequest req, HttpServletResponse resp)
-            throws UnsupportedEncodingException {
+    private void processAccessControls(HttpServletRequest req, HttpServletResponse resp) {
         String origin = req.getHeader("Origin");
         if (origin != null && isAllowed(origin.trim())) {
             resp.addHeader("Access-Control-Allow-Credentials", "true");
