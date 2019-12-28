@@ -10,10 +10,12 @@
   </parent>
   <groupId>org.jenkins-ci.plugins</groupId>
   <artifactId>cors-filter</artifactId>
-  <version>1.2-SNAPSHOT</version>
+  <version>${revision}${changelist}</version>
   <packaging>hpi</packaging>
 
   <properties>
+    <revision>1.2</revision>
+    <changelist>-SNAPSHOT</changelist>
     <!-- Baseline Jenkins version you use to build and test the plugin. Users must have this version or newer to run. -->
 		<jenkins.version>2.60.3</jenkins.version>
 		<java.level>8</java.level>
@@ -41,7 +43,7 @@
     <connection>scm:git:git://github.com/jenkinsci/${project.artifactId}-plugin.git</connection>
     <developerConnection>scm:git:git@github.com:jenkinsci/${project.artifactId}-plugin.git</developerConnection>
     <url>https://github.com/jenkinsci/${project.artifactId}-plugin</url>
-    <tag>HEAD</tag>
+    <tag>${scmTag}</tag>
   </scm>  
 
   <repositories>
