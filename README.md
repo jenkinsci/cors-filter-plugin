@@ -10,7 +10,7 @@ This plugin supports [cross-site](http://en.wikipedia.org/wiki/Cross-origin_reso
 
 ## Request / Response examples
 
-###Simple GET Request/response
+### Simple GET Request/response
 
 ```
 GET /api HTTP/1.1
@@ -25,7 +25,7 @@ Access-Control-Allow-Origin: http://foo.example
 [some data]
 ```
 
-###Non-GET (or POST,PUT etc...) methods
+### Non-GET (or POST,PUT etc...) methods
 
 ```
 OPTIONS /api/json HTTP/1.1
