@@ -51,14 +51,6 @@
     </license>
   </licenses>
 
-  <developers>
-    <developer>
-      <id>uday</id>
-      <name>Udaypal Aarkoti</name>
-      <email>uaarkoti@gmail.com</email>
-    </developer>
-  </developers>
-
   <repositories>
     <repository>
       <id>repo.jenkins-ci.org</id>
