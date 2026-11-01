@@ -30,6 +30,7 @@
     <jenkins.version>${jenkins.baseline}.2</jenkins.version>
     <gitHubRepo>jenkinsci/${project.artifactId}-plugin</gitHubRepo>
     <artifactId>bom-${jenkins.baseline}.x</artifactId>
+    <ban-junit4-imports.skip>false</ban-junit4-imports.skip>
   </properties>
 
   <dependencyManagement>
