@@ -84,10 +84,10 @@ public class AccessControlsFilter implements Filter, Describable<AccessControlsF
      * Apply access controls
      */
     private void processAccessControls(HttpServletRequest req, HttpServletResponse resp) {
-        String origin = req.getHeader("Origin");
-        if (origin != null && isAllowed(origin.trim())) {
+        String allowedOrigin = getAllowedOrigin(req);
+        if (allowedOrigin != null) {
             resp.addHeader("Access-Control-Allow-Credentials", "true");
-            resp.addHeader("Access-Control-Allow-Origin", origin);
+            resp.addHeader("Access-Control-Allow-Origin", allowedOrigin);
             resp.addHeader("Access-Control-Allow-Methods", getDescriptor().getAllowedMethods());
             resp.addHeader("Access-Control-Allow-Headers", getDescriptor().getAllowedHeaders());
             resp.addHeader("Access-Control-Expose-Headers", getDescriptor().getExposedHeaders());
@@ -96,12 +96,24 @@ public class AccessControlsFilter implements Filter, Describable<AccessControlsF
     }
 
     /**
-     * Check if the origin is allowed
+     * Returns the value to send back in the Access-Control-Allow-Origin header, or
+     * {@code null} if the origin of the request is not allowed.
      *
-     * @param origin
-     * @return
+     * @param req the incoming request
+     * @return the allowed origin or {@code null}
      */
-    private boolean isAllowed(String origin) {
+    private String getAllowedOrigin(HttpServletRequest req) {
+        final String originHeader = req.getHeader("Origin");
+        if (originHeader == null) {
+            return null;
+        }
+
+        // Reject line breaks to prevent HTTP response splitting through the Origin header.
+        if (originHeader.indexOf('\r') >= 0 || originHeader.indexOf('\n') >= 0) {
+            return null;
+        }
+        final String origin = originHeader.trim();
+
         final List<String> allowedOriginsList = getDescriptor().getAllowedOriginsList();
 
         /**
@@ -109,16 +121,17 @@ public class AccessControlsFilter implements Filter, Describable<AccessControlsF
          * Should be used with caution.
          */
         if (allowedOriginsList.contains("*")) {
-            return true;
+            return origin;
         }
 
-        for (int i = 0; i < allowedOriginsList.size(); i++) {
-            if (allowedOriginsList.get(i).equals(origin)) {
-                return true;
+        for (String allowedOrigin : allowedOriginsList) {
+            if (allowedOrigin.equals(origin)) {
+                // Return the configured value rather than the request header.
+                return allowedOrigin;
             }
         }
 
-        return false;
+        return null;
     }
 
     @Override
