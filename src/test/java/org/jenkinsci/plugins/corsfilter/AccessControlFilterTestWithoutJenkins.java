@@ -2,10 +2,10 @@ package org.jenkinsci.plugins.corsfilter;
 
 import java.util.List;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static org.hamcrest.CoreMatchers.hasItems;
-import static org.junit.Assert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class AccessControlFilterTestWithoutJenkins {
 
@@ -13,7 +13,8 @@ public class AccessControlFilterTestWithoutJenkins {
     public void testCreateAllowedOriginsListRemovesWhitespace() {
         List<String> list = AccessControlsFilter.DescriptorImpl.createAllowedOriginsList("foo,bar ,    baz      ,      wibble");
 
-        assertThat(list, hasItems("foo", "bar", "baz", "wibble"));
+        assertTrue(list.containsAll(List.of("foo", "bar", "baz", "wibble")));
+        assertEquals(4, list.size());
     }
 
 }

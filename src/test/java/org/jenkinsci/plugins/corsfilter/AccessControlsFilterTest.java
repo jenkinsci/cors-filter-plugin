@@ -1,36 +1,35 @@
 package org.jenkinsci.plugins.corsfilter;
 
 import org.htmlunit.html.HtmlPage;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.jvnet.hudson.test.JenkinsRule;
+import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Test CORS Filter
- * 
+ *
  * @author Udaypal Aarkoti
  * @author Steven Christou
  */
-public class AccessControlsFilterTest extends JenkinsRule {
-
-    @Rule public JenkinsRule r = new JenkinsRule();
+@WithJenkins
+public class AccessControlsFilterTest {
 
     AccessControlsFilter.DescriptorImpl descriptor;
-    WebClient client;
+    JenkinsRule.WebClient client;
 
-    @Before
-    public void setUp() throws Exception{
+    @BeforeEach
+    public void setUp(JenkinsRule r) throws Exception{
         AccessControlsFilter.init();
         descriptor = AccessControlsFilter.DESCRIPTOR;
         client = r.createWebClient();
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
         descriptor.setAllowedOrigins(null);
         descriptor.setEnabled(false);
@@ -70,10 +69,10 @@ public class AccessControlsFilterTest extends JenkinsRule {
         HtmlPage htmlPage = client.goTo("");
 
         assertTrue(Boolean.valueOf(htmlPage.getWebResponse().getResponseHeaderValue("Access-Control-Allow-Credentials")));
-        assertEquals(htmlPage.getWebResponse().getResponseHeaderValue("Access-Control-Allow-Origin"), "http://localhost:9000");
-        assertEquals(htmlPage.getWebResponse().getResponseHeaderValue("Access-Control-Allow-Headers"), "X-Requested-With");
-        assertEquals(htmlPage.getWebResponse().getResponseHeaderValue("Access-Control-Expose-Headers"), "X-Requested-With");
-        assertEquals(htmlPage.getWebResponse().getResponseHeaderValue("Access-Control-Max-Age"), "999");
+        assertEquals("http://localhost:9000", htmlPage.getWebResponse().getResponseHeaderValue("Access-Control-Allow-Origin"));
+        assertEquals("X-Requested-With", htmlPage.getWebResponse().getResponseHeaderValue("Access-Control-Allow-Headers"));
+        assertEquals("X-Requested-With", htmlPage.getWebResponse().getResponseHeaderValue("Access-Control-Expose-Headers"));
+        assertEquals("999", htmlPage.getWebResponse().getResponseHeaderValue("Access-Control-Max-Age"));
     }
 
 }
